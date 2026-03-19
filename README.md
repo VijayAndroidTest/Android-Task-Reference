@@ -1,6 +1,6 @@
 # 📝 Task Reference App
 
-A modern Android application demonstrating **Clean Architecture** and **MVVM** using Jetpack Compose. This project was built as a reference for 1-year experienced Junior Developers.
+A high-performance Android application demonstrating Clean Architecture and MVVM using Jetpack Compose. This project serves as a technical blueprint for implementing robust local caching, reactive UI patterns, and scalable dependency injection.
 
 ---
 

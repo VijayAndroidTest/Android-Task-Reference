@@ -1,4 +1,4 @@
-package com.example.reference
+package com.example.reference.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,14 +16,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -34,16 +35,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role.Companion.Checkbox
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
+import com.example.reference.ui.TaskViewModel
 import com.example.reference.domain.Task
 import com.example.reference.ui.theme.ReferenceTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,8 +58,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             ReferenceTheme {
                 TaskScreen()
-
-
             }
         }
     }
@@ -65,36 +65,49 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel = hiltViewModel()) {
-    // 1. Better State Observation (Lifecycle Aware)
-    val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val pagingItems = viewModel.taskPagingData.collectAsLazyPagingItems()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("My Tasks", style = MaterialTheme.typography.headlineMedium) })
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { /* TODO: Add Task */ }) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
-        }
+        topBar = { TopAppBar(title = { Text("Advanced Paging Tasks") }) }
     ) { paddingValues ->
-        // 2. Pull-to-Refresh Container
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { viewModel.refreshData() },
+            onRefresh = {
+                pagingItems.refresh()
+                viewModel.refreshData()
+            },
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
-            if (tasks.isEmpty() && !isRefreshing) {
-                EmptyState() // Professional apps never show a blank white screen
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(tasks, key = { it.id }) { task ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Proper way to handle LazyPagingItems in 2026
+                items(
+                    count = pagingItems.itemCount,
+                    key = pagingItems.itemKey { it.id }
+                ) { index ->
+                    val task = pagingItems[index]
+                    if (task != null) {
                         TaskItem(task)
                     }
+                }
+
+                // Bottom Loading State
+                when (pagingItems.loadState.append) {
+                    is LoadState.Loading -> {
+                        item {
+                            CircularProgressIndicator(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp).wrapContentWidth(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+                    is LoadState.Error -> {
+                        item { Text("Error loading more...") }
+                    }
+                    else -> {}
                 }
             }
         }

@@ -13,7 +13,7 @@ class TaskRepositoryImpl @Inject constructor(
     private val api: TaskApi,
     private val dao: TaskDao
 ) : TaskRepository {
-
+    override fun getTasksPagingSource() = dao.getTasksPagingSource()
     override fun getTasks(): Flow<List<Task>> {
         return dao.getTasks()
             .map { list ->

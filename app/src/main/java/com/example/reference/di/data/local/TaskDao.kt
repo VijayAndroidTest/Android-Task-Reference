@@ -1,5 +1,6 @@
 package com.example.reference.di.data.local
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -14,4 +15,7 @@ interface TaskDao {
 
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertTask(task: TaskEntity) // ✅ SINGLE insert
+
+    @Query("SELECT * FROM TaskEntity")
+    fun getTasksPagingSource(): PagingSource<Int, TaskEntity>
 }

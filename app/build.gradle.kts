@@ -59,9 +59,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-
+    val paging_version = "3.3.0" // Check for latest 2026 version
+    val room_version = "2.6.1"
+    implementation("androidx.paging:paging-runtime-ktx:$paging_version")
+    implementation("androidx.paging:paging-compose:$paging_version")
     implementation("com.google.dagger:hilt-android:2.48")
-
+    implementation("androidx.room:room-paging:${room_version}")
     kapt("com.google.dagger:hilt-compiler:2.48")
     kapt("androidx.room:room-compiler:2.6.1")
 
